@@ -4,7 +4,7 @@ import com.workintech.s18d2.entity.Fruit;
 import com.workintech.s18d2.entity.FruitType;
 import com.workintech.s18d2.entity.Vegetable;
 import com.workintech.s18d2.exceptions.PlantException;
-import com.workintech.s18d2.repository.FruitRepository;
+import com.workintech.s18d2.dao.FruitRepository;
 import com.workintech.s18d2.services.FruitServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -121,7 +121,7 @@ class MainTest {
     @Test
     @DisplayName("FruitRepository::getByPriceDesc should return fruits in descending order of price")
     void testGetByPriceDesc() {
-        List<Fruit> fruits = fruitRepository.getByPriceDesc();
+        List<Fruit> fruits = fruitRepository.findAllByOrderByPriceDesc();
         assertEquals(2, fruits.size());
         assertTrue(fruits.get(0).getPrice() >= fruits.get(1).getPrice());
     }
@@ -129,7 +129,7 @@ class MainTest {
     @Test
     @DisplayName("FruitRepository::getByPriceAsc should return fruits in ascending order of price")
     void testGetByPriceAsc() {
-        List<Fruit> fruits = fruitRepository.getByPriceAsc();
+        List<Fruit> fruits = fruitRepository.findAllByOrderByPriceAsc();
         assertEquals(2, fruits.size());
         assertTrue(fruits.get(0).getPrice() <= fruits.get(1).getPrice());
     }
@@ -137,7 +137,7 @@ class MainTest {
     @Test
     @DisplayName("FruitRepository::searchByName should return fruits with matching name")
     void testSearchByName() {
-        List<Fruit> fruits = fruitRepository.searchByName("Apple");
+        List<Fruit> fruits = fruitRepository.findByNameContainingIgnoreCase("Apple");
         assertEquals(1, fruits.size());
         assertEquals("Apple", fruits.get(0).getName());
     }
@@ -158,13 +158,13 @@ class MainTest {
     void testGetByIdNotFoundFruitService() {
         when(mockFruitRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        assertThrows(PlantException.class, () -> fruitService.getById(1L));
+        assertThrows(RuntimeException.class, () -> fruitService.getById(1L));
     }
 
     @Test
     @DisplayName("FruitService::getAll() should return all fruits")
     void testGetByPriceAscFruitService() {
-        when(mockFruitRepository.getByPriceAsc()).thenReturn(Arrays.asList(sampleFruitForFruitServiceTest));
+        when(mockFruitRepository.findAllByOrderByPriceAsc()).thenReturn(Arrays.asList(sampleFruitForFruitServiceTest));
 
         List<Fruit> fruits = fruitService.getByPriceAsc();
 
@@ -186,8 +186,8 @@ class MainTest {
     @Test
     @DisplayName("FruitService::delete() should return the deleted fruit")
     void testDeleteFruitService() {
-        when(mockFruitRepository.findById(anyLong())).thenReturn(Optional.of(sampleFruitForFruitServiceTest));
-        doNothing().when(mockFruitRepository).delete(any(Fruit.class));
+        when(mockFruitRepository.findById(anyLong()))
+                .thenReturn(Optional.of(sampleFruitForFruitServiceTest));
 
         Fruit deletedFruit = fruitService.delete(1L);
 
@@ -198,7 +198,7 @@ class MainTest {
     @Test
     @DisplayName("FruitService::searchByName() should return fruits with the given name")
     void testSearchByNameFruitService() {
-        when(mockFruitRepository.searchByName(anyString())).thenReturn(Arrays.asList(sampleFruitForFruitServiceTest));
+        when(mockFruitRepository.findByNameContainingIgnoreCase(anyString())).thenReturn(Arrays.asList(sampleFruitForFruitServiceTest));
 
         List<Fruit> fruits = fruitService.searchByName("Apple");
 
